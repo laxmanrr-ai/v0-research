@@ -1,0 +1,31 @@
+ticker,name,sector,industry
+AAPL,Apple Inc,Technology,Consumer Electronics
+MSFT,Microsoft Corp,Technology,Software
+NVDA,NVIDIA Corp,Technology,Semiconductors
+GOOGL,Alphabet Inc,Technology,Internet Services
+META,Meta Platforms,Technology,Social Media
+AMZN,Amazon.com Inc,Technology,E-Commerce
+CRM,Salesforce Inc,Technology,Enterprise Software
+IBM,IBM Corp,Technology,IT Services
+ORCL,Oracle Corp,Technology,Enterprise Software
+INTC,Intel Corp,Technology,Semiconductors
+JPM,JPMorgan Chase,Finance,Banking
+BAC,Bank of America,Finance,Banking
+GS,Goldman Sachs,Finance,Investment Banking
+V,Visa Inc,Finance,Payments
+MA,Mastercard Inc,Finance,Payments
+JNJ,Johnson & Johnson,Healthcare,Pharmaceuticals
+UNH,UnitedHealth Group,Healthcare,Health Insurance
+PFE,Pfizer Inc,Healthcare,Pharmaceuticals
+ABBV,AbbVie Inc,Healthcare,Biotechnology
+MRK,Merck & Co,Healthcare,Pharmaceuticals
+XOM,Exxon Mobil,Energy,Oil & Gas
+CVX,Chevron Corp,Energy,Oil & Gas
+COP,ConocoPhillips,Energy,Oil & Gas
+WMT,Walmart Inc,Consumer,Retail
+HD,Home Depot,Consumer,Home Improvement
+MCD,McDonalds Corp,Consumer,Restaurants
+KO,Coca-Cola Co,Consumer,Beverages
+PG,Procter & Gamble,Consumer,Household Products
+CAT,Caterpillar Inc,Industrial,Machinery
+BA,Boeing Co,Industrial,Aerospace
