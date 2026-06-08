@@ -1,0 +1,78 @@
+name: Daily Ranker
+
+on:
+  schedule:
+    # 21:30 UTC = 4:30pm ET (EST) / 5:30pm ET (EDT)
+    # Runs Mon–Fri. Market closes at 4pm ET; 30-min buffer for data propagation.
+    - cron: '30 21 * * 1-5'
+
+  # Allow manual trigger from GitHub UI (Actions tab → Run workflow)
+  workflow_dispatch:
+
+jobs:
+  run-daily-ranker:
+    runs-on: ubuntu-latest
+
+    # Only run on weekdays — cron already handles this,
+    # but this guard catches manual triggers on weekends.
+    if: github.event_name == 'workflow_dispatch' || contains('1,2,3,4,5', format('{0}', github.run_number))
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Need full history so CSV appends work correctly
+          fetch-depth: 0
+          # Use token with write permission to commit data back
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Run daily ranker
+        run: python daily_ranker.py
+        # If Yahoo Finance is temporarily unavailable, don't fail silently —
+        # the script already handles retries internally. A hard failure here
+        # means the data fetch genuinely failed and should be investigated.
+
+      - name: Check if data was generated
+        run: |
+          if [ -f "data/live_rankings.csv" ]; then
+            echo "✅ live_rankings.csv exists"
+            tail -5 data/live_rankings.csv
+          else
+            echo "❌ live_rankings.csv not found — ranker may have failed"
+            exit 1
+          fi
+
+      - name: Commit updated data files
+        run: |
+          git config user.name  "v0-research-bot"
+          git config user.email "v0-research-bot@users.noreply.github.com"
+          
+          git add data/live_rankings.csv
+          git add data/prices.csv
+          git add data/regime_log.csv
+          
+          # Only commit if there are actual changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit (market may have been closed today)"
+          else
+            TODAY=$(date -u +"%Y-%m-%d")
+            git commit -m "Daily rankings: ${TODAY}"
+            git push
+            echo "✅ Data committed and pushed"
+          fi
+
+      - name: Upload rankings as artifact (backup)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-rankings-${{ github.run_id }}
+          path: data/
+          retention-days: 90
