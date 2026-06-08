@@ -1,0 +1,75 @@
+name: Weekly IC Tracker
+
+on:
+  schedule:
+    # 22:00 UTC Friday = 5:00pm ET Friday
+    # Runs after daily_ranker.yml has already committed Friday's rankings.
+    - cron: '0 22 * * 5'
+
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+jobs:
+  run-ic-tracker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check data exists before running
+        run: |
+          if [ ! -f "data/live_rankings.csv" ]; then
+            echo "❌ No live_rankings.csv found. Has daily_ranker.py run at least once?"
+            exit 1
+          fi
+          ROWS=$(wc -l < data/live_rankings.csv)
+          echo "✅ live_rankings.csv has ${ROWS} rows"
+          
+          if [ ! -f "data/prices.csv" ]; then
+            echo "❌ No prices.csv found."
+            exit 1
+          fi
+
+      - name: Run IC tracker
+        run: python ic_tracker.py
+
+      - name: Show checkpoint summary
+        run: |
+          echo "=== IC Log (last 10 entries) ==="
+          if [ -f "data/ic_log.csv" ]; then
+            tail -10 data/ic_log.csv
+          fi
+
+      - name: Commit IC log and updated returns
+        run: |
+          git config user.name  "v0-research-bot"
+          git config user.email "v0-research-bot@users.noreply.github.com"
+          
+          git add data/ic_log.csv
+          git add data/live_rankings.csv  # forward returns now filled in
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            TODAY=$(date -u +"%Y-%m-%d")
+            git commit -m "Weekly IC update: ${TODAY}"
+            git push
+            echo "✅ IC log committed"
+          fi
+
+      - name: Upload IC report as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ic-report-${{ github.run_id }}
+          path: data/
+          retention-days: 180
